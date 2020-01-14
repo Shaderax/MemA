@@ -16,21 +16,24 @@ StackAllocator::StackAllocator( std::size_t size )
 
 StackAllocator::~StackAllocator( void )
 {
-
+	if (_data)
+		munmap(_data, _maxSize);
 }
 
 void* StackAllocator::Allocate( std::size_t size )
 {
-	assert((_offset + size + sizeof(StackAllocator::AllocatorHeader) <= _maxSize) && "Exceed the maximum size");
+	assert((_offset + size + sizeof(std::size_t) <= _maxSize) && "Exceed the maximum size");
 
-	std::size_t mem = (std::size_t)_data + _offset + size;
-	*(std::size_t*)((std::size_t)mem) = size;
-	_offset += size + sizeof(AllocatorHeader);
+	std::size_t mem = (std::size_t)_data + _offset;
+	*(std::size_t*)(mem) = size;
+	_offset += size + sizeof(std::size_t);
 
-	return ((void*)(mem + sizeof(AllocatorHeader)));
+	return ((void*)(mem + sizeof(std::size_t)));
 }
 
 void StackAllocator::Free( void* ptr )
 {
-	
+	assert(ptr != nullptr);
+
+	_offset = (std::size_t)ptr - (std::size_t)_data - sizeof(std::size_t);
 }
